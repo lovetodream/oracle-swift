@@ -89,7 +89,9 @@ internal struct OracleStatement {
         }
 
         var count: UInt32 = 0
-        dpiStmt_getNumQueryColumns(handle, &count)
+        guard dpiStmt_getNumQueryColumns(handle, &count) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
         var row: [OracleData] = []
         for i in 0..<count {
             try row.append(data(at: Int32(i + 1)))
@@ -147,7 +149,9 @@ internal struct OracleStatement {
 
     private func column(at offset: Int32) throws -> String {
         var queryInfo = dpiQueryInfo()
-        dpiStmt_getQueryInfo(handle, UInt32(offset), &queryInfo)
+        guard dpiStmt_getQueryInfo(handle, UInt32(offset), &queryInfo) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
         return String(cString: queryInfo.name)
     }
 }
