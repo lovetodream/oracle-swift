@@ -53,6 +53,13 @@ internal struct OracleStatement {
         }
     }
 
+    internal func execute() throws {
+        var numberOfQueryColumns: UInt32 = 0
+        guard dpiStmt_execute(handle, dpiExecMode(DPI_MODE_EXEC_DEFAULT), &numberOfQueryColumns) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
+    }
+
     internal func columns() throws -> OracleColumnOffsets {
         var columns: [(String, Int)] = []
 
