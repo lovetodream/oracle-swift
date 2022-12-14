@@ -10,8 +10,10 @@ internal struct OracleStatement {
         }
         self.connection = connection
         guard dpiConn_prepareStmt(cHandle, 0, query, UInt32(query.count), nil, 0, &handle) == DPI_SUCCESS else {
+            connection.logger.debug("Failed to prepare statement")
             throw OracleError.getLast(for: connection)
         }
+        connection.logger.debug("Statement successfully prepared")
     }
 
     internal func bind(_ binds: [OracleData]) throws {
@@ -60,7 +62,7 @@ internal struct OracleStatement {
         // iterate over column count and initialize columns once
         // we will then re-use the columns for each row
         for i in 0..<count {
-            try columns.append((self.column(at: Int32(i)), numericCast(i)))
+            try columns.append((self.column(at: Int32(i + 1)), numericCast(i)))
         }
 
         return .init(offsets: columns)
@@ -82,7 +84,7 @@ internal struct OracleStatement {
         dpiStmt_getNumQueryColumns(handle, &count)
         var row: [OracleData] = []
         for i in 0..<count {
-            try row.append(data(at: Int32(i)))
+            try row.append(data(at: Int32(i + 1)))
         }
         return OracleRow(columnOffsets: columns, data: row)
     }
