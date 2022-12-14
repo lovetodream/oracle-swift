@@ -58,6 +58,7 @@ internal struct OracleStatement {
 
         var count: UInt32 = 0
         dpiStmt_getNumQueryColumns(handle, &count)
+        connection.logger.debug("Total amount of columns: \(count)")
 
         // iterate over column count and initialize columns once
         // we will then re-use the columns for each row

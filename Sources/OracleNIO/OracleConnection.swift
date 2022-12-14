@@ -167,8 +167,15 @@ public final class OracleConnection: OracleDatabase {
         threadPool.submit { state in
             do {
                 let statement = try OracleStatement(query: query, on: self)
+                logger.debug("Adding binds...")
                 try statement.bind(binds)
+                logger.debug("Binds added successfully")
+                logger.debug("Executing statement...")
+                try statement.execute()
+                logger.debug("Executed statement successfully")
+                logger.debug("Fetching columns...")
                 let columns = try statement.columns()
+                logger.debug("Columns fetched successfully")
                 var callbacks: [EventLoopFuture<Void>] = []
                 while let row = try statement.nextRow(for: columns) {
                     let callback = self.eventLoop.submit {
@@ -178,6 +185,7 @@ public final class OracleConnection: OracleDatabase {
                 }
                 EventLoopFuture<Void>.andAllSucceed(callbacks, on: self.eventLoop).cascade(to: promise)
             } catch {
+                logger.debug("\(error.localizedDescription)")
                 promise.fail(error)
             }
         }
