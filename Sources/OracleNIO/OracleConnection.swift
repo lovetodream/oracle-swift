@@ -112,7 +112,16 @@ public final class OracleConnection: OracleDatabase {
         self.handle == nil
     }
 
-    public static func open(authorizationMode: AuthorizationMode = .default, username: String, password: String, connectionString: String, clientLibraryDir: String?, threadPool: NIOThreadPool, logger: Logger, on eventLoop: EventLoop) -> EventLoopFuture<OracleConnection> {
+    public static func open(
+        authorizationMode: AuthorizationMode = .default,
+        username: String,
+        password: String,
+        connectionString: String,
+        clientLibraryDir: String? = nil,
+        threadPool: NIOThreadPool,
+        logger: Logger = .init(label: "com.timozacherl.oracle"),
+        on eventLoop: EventLoop
+    ) -> EventLoopFuture<OracleConnection> {
         let promise = eventLoop.makePromise(of: OracleConnection.self)
         var context: OpaquePointer?
         var errorInfo = dpiErrorInfo()
