@@ -147,6 +147,7 @@ public final class OracleConnection: OracleDatabase {
          on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
         self.handle = handle
+        self.context = context
         self.threadPool = threadPool
         self.logger = logger
     }
