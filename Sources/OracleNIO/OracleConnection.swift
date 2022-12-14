@@ -112,12 +112,20 @@ public final class OracleConnection: OracleDatabase {
         self.handle == nil
     }
 
-    public static func open(authorizationMode: AuthorizationMode = .default, username: String, password: String, connectionString: String, threadPool: NIOThreadPool, logger: Logger, on eventLoop: EventLoop) -> EventLoopFuture<OracleConnection> {
+    public static func open(authorizationMode: AuthorizationMode = .default, username: String, password: String, connectionString: String, clientLibraryDir: String?, threadPool: NIOThreadPool, logger: Logger, on eventLoop: EventLoop) -> EventLoopFuture<OracleConnection> {
         let promise = eventLoop.makePromise(of: OracleConnection.self)
         var context: OpaquePointer?
         var errorInfo = dpiErrorInfo()
         var cConnection: OpaquePointer? = nil
-        if dpiContext_createWithParams(UInt32(DPI_MAJOR_VERSION), UInt32(DPI_MINOR_VERSION), nil, &context, &errorInfo) != DPI_SUCCESS {
+        let createParams = clientLibraryDir?.withCString { pointer in
+            "oracle-nio".withCString {
+                return dpiContextCreateParams(defaultDriverName: $0, defaultEncoding: nil, loadErrorUrl: nil, oracleClientLibDir: pointer, oracleClientConfigDir: nil)
+            }
+        }
+        if var createParams, dpiContext_createWithParams(UInt32(DPI_MAJOR_VERSION), UInt32(DPI_MINOR_VERSION), &createParams, &context, &errorInfo) != DPI_SUCCESS {
+            logger.error("Failed to create context with parameters")
+            promise.fail(OracleError(errorInfo: errorInfo))
+        } else if dpiContext_createWithParams(UInt32(DPI_MAJOR_VERSION), UInt32(DPI_MINOR_VERSION), nil, &context, &errorInfo) != DPI_SUCCESS {
             logger.error("Failed to create context")
             promise.fail(OracleError(errorInfo: errorInfo))
         } else if dpiConn_create(context, username, UInt32(username.count), password, UInt32(password.count), connectionString, UInt32(connectionString.count), nil, nil, &cConnection) == DPI_SUCCESS {
