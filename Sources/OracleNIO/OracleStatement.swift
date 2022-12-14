@@ -73,6 +73,11 @@ internal struct OracleStatement {
         var bufferRowIndex: UInt32 = 0
         dpiStmt_fetch(handle, &found, &bufferRowIndex)
 
+        if found == 0 {
+            dpiStmt_release(handle)
+            return nil
+        }
+
         var count: UInt32 = 0
         dpiStmt_getNumQueryColumns(handle, &count)
         var row: [OracleData] = []
@@ -87,7 +92,9 @@ internal struct OracleStatement {
     private func data(at offset: Int32) throws -> OracleData {
         var nativeType = dpiNativeTypeNum()
         var value: UnsafeMutablePointer<dpiData>?
-        dpiStmt_getQueryValue(handle, UInt32(offset), &nativeType, &value)
+        guard dpiStmt_getQueryValue(handle, UInt32(offset), &nativeType, &value) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
         guard let value else {
             throw OracleError.getLast(for: connection)
         }
