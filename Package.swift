@@ -19,7 +19,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "NIO", package: "swift-nio"),
-                .target(name: "ODPIC"),
+                "ODPIC",
             ]),
         .testTarget(
             name: "OracleNIOTests",
