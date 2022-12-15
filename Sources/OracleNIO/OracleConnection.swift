@@ -177,15 +177,15 @@ public final class OracleConnection: OracleDatabase {
         threadPool.submit { state in
             do {
                 let statement = try OracleStatement(query: query, on: self)
-                logger.debug("Adding binds...")
+                logger.trace("Adding binds...")
                 try statement.bind(binds)
-                logger.debug("Binds added successfully")
-                logger.debug("Executing statement...")
+                logger.trace("Binds added successfully")
+                logger.trace("Executing statement...")
                 try statement.execute()
-                logger.debug("Executed statement successfully")
-                logger.debug("Fetching columns...")
+                logger.trace("Executed statement successfully")
+                logger.trace("Fetching columns...")
                 let columns = try statement.columns()
-                logger.debug("Columns fetched successfully")
+                logger.trace("Columns fetched successfully")
                 var callbacks: [EventLoopFuture<Void>] = []
                 while let row = try statement.nextRow(for: columns) {
                     let callback = self.eventLoop.submit {
