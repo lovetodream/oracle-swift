@@ -195,7 +195,7 @@ public final class OracleConnection: OracleDatabase {
                 }
                 EventLoopFuture<Void>.andAllSucceed(callbacks, on: self.eventLoop).cascade(to: promise)
             } catch {
-                logger.debug("\(error.localizedDescription)")
+                logger.error("\(error.localizedDescription)")
                 promise.fail(error)
             }
         }
