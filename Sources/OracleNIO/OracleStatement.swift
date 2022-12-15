@@ -64,7 +64,9 @@ internal struct OracleStatement {
         var columns: [(String, Int)] = []
 
         var count: UInt32 = 0
-        dpiStmt_getNumQueryColumns(handle, &count)
+        guard dpiStmt_getNumQueryColumns(handle, &count) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
         connection.logger.debug("Total amount of columns: \(count)")
 
         // iterate over column count and initialize columns once
@@ -81,10 +83,14 @@ internal struct OracleStatement {
         // for as long as there are new rows to be fetched
         var found: Int32 = 0
         var bufferRowIndex: UInt32 = 0
-        dpiStmt_fetch(handle, &found, &bufferRowIndex)
+        guard dpiStmt_fetch(handle, &found, &bufferRowIndex) == DPI_SUCCESS else {
+            throw OracleError.getLast(for: connection)
+        }
 
         if found == 0 {
-            dpiStmt_release(handle)
+            guard dpiStmt_release(handle) == DPI_SUCCESS else {
+                throw OracleError.getLast(for: connection)
+            }
             return nil
         }
 
