@@ -44,12 +44,36 @@ final class OracleNIOTests: XCTestCase {
                                                       connectionString: Self.connectionString,
                                                       threadPool: threadPool,
                                                       on: eventLoop).wait()
-        defer {
-            try! connection.close().wait()
-        }
+        defer { try! connection.close().wait() }
 
-        let rows = try connection.query("SELECT 'Hello, World!' FROM dual").wait()
+        let rows = try connection.query("SELECT 'Hello, World!' as value FROM dual").wait()
         print(rows)
+    }
+
+    func testBindingString() async throws {
+        let connection = try await OracleConnection.connect(username: Self.username,
+                                                            password: Self.password,
+                                                            connectionString: Self.connectionString,
+                                                            threadPool: threadPool,
+                                                            on: eventLoop)
+        defer { try! connection.close().wait() }
+
+        let value = "Hello, World!"
+        let rows = try await connection.query("SELECT :1 as value FROM dual", [value.oracleData!])
+        XCTAssertEqual(value, rows.first?.column("value")?.string)
+    }
+
+    func testBindingNumeric() async throws {
+        let connection = try await OracleConnection.connect(username: Self.username,
+                                                            password: Self.password,
+                                                            connectionString: Self.connectionString,
+                                                            threadPool: threadPool,
+                                                            on: eventLoop)
+        defer { try! connection.close().wait() }
+
+        let value = 1
+        let rows = try await connection.query("SELECT :1 as value FROM dual", [value.oracleData!])
+        XCTAssertEqual(value, rows.first?.column("value")?.integer)
     }
 }
 
