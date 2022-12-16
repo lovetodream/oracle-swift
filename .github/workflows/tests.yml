@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:latest
+        env:
+          ORACLE_RANDOM_PASSWORD: true
+          APP_USER: my_user
+          APP_USER_PASSWORD: my_password
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download OIC
+      run: wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
+    - name: Unzip OIC
+      run: unzip instantclient-basiclite-linuxx64.zip
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v
+      env:
+        ORA_USER: my_user
+        ORA_PWD: my_password
+        ORA_CONN: //oracle:1521/XEPDB1
