@@ -21,6 +21,9 @@ final class OracleNIOTests: XCTestCase {
         }
         return value
     }()
+    static let oicLib: String? = {
+        env("ORA_OIC")
+    }()
 
     var threadPool: NIOThreadPool!
     var eventLoopGroup: EventLoopGroup!
@@ -42,6 +45,7 @@ final class OracleNIOTests: XCTestCase {
         let connection = try OracleConnection.connect(username: Self.username,
                                                       password: Self.password,
                                                       connectionString: Self.connectionString,
+                                                      clientLibraryDir: Self.oicLib,
                                                       threadPool: threadPool,
                                                       on: eventLoop).wait()
         defer { try! connection.close().wait() }
@@ -54,6 +58,7 @@ final class OracleNIOTests: XCTestCase {
         let connection = try await OracleConnection.connect(username: Self.username,
                                                             password: Self.password,
                                                             connectionString: Self.connectionString,
+                                                            clientLibraryDir: Self.oicLib,
                                                             threadPool: threadPool,
                                                             on: eventLoop)
         defer { try! connection.close().wait() }
@@ -67,6 +72,7 @@ final class OracleNIOTests: XCTestCase {
         let connection = try await OracleConnection.connect(username: Self.username,
                                                             password: Self.password,
                                                             connectionString: Self.connectionString,
+                                                            clientLibraryDir: Self.oicLib,
                                                             threadPool: threadPool,
                                                             on: eventLoop)
         defer { try! connection.close().wait() }
