@@ -34,7 +34,9 @@ jobs:
     - name: remove me later
       run: ls -R
     - name: Add OIC path to env
-      run: export ORA_OIC=$(pwd)/instantclient_21_8/
+      run: export ORA_OIC=$(pwd)/instantclient_21_8
+    - name: remove too
+      run: set
     - name: Build
       run: swift build -v
     - name: Run tests
