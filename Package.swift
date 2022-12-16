@@ -3,6 +3,12 @@ import PackageDescription
 
 let package = Package(
     name: "oracle-nio",
+    platforms: [
+        .macOS(.v10_15),
+        .iOS(.v13),
+        .watchOS(.v6),
+        .tvOS(.v13),
+    ],
     products: [
         .library(
             name: "OracleNIO",

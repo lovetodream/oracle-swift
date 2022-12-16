@@ -219,3 +219,41 @@ public final class OracleConnection: OracleDatabase {
         assert(handle == nil && context == nil, "OracleConnection was not closed before deinitializing")
     }
 }
+
+
+// MARK: Async/Await Interface
+
+#if canImport(_Concurrency)
+extension OracleConnection {
+    public static func connect(
+        authorizationMode: AuthorizationMode = .default,
+        username: String,
+        password: String,
+        connectionString: String,
+        clientLibraryDir: String? = nil,
+        threadPool: NIOThreadPool,
+        logger: Logger = .init(label: "com.timozacherl.oracle"),
+        on eventLoop: EventLoop
+    ) async throws -> OracleConnection {
+        try await connect(
+            authorizationMode: authorizationMode,
+            username: username,
+            password: password,
+            connectionString: connectionString,
+            clientLibraryDir: clientLibraryDir,
+            threadPool: threadPool,
+            logger: logger,
+            on: eventLoop
+        ).get()
+    }
+
+    public func close() async throws {
+        try await self.close().get()
+    }
+
+    @discardableResult
+    public func query(_ query: String, _ binds: [OracleData]) async throws -> [OracleRow] {
+        try await self.query(query, binds).get()
+    }
+}
+#endif
