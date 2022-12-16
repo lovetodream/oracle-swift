@@ -33,6 +33,11 @@ final class OracleNIOTests: XCTestCase {
         XCTAssert(isLoggingConfigured)
     }
 
+    override func tearDownWithError() throws {
+        try threadPool.syncShutdownGracefully()
+        try eventLoopGroup.syncShutdownGracefully()
+    }
+
     func testBasicConnection() throws {
         let connection = try OracleConnection.connect(username: Self.username,
                                                       password: Self.password,
