@@ -31,6 +31,8 @@ jobs:
       run: wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
     - name: Unzip OIC
       run: unzip instantclient-basiclite-linuxx64.zip
+    - name: remove me later
+      run: ls -R
     - name: Add OIC path to env
       run: export ORA_OIC=$(pwd)/instantclient-basiclite-linuxx64/instantclient_21_8/
     - name: Build
