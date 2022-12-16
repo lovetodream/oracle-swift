@@ -252,7 +252,7 @@ extension OracleConnection {
     }
 
     @discardableResult
-    public func query(_ query: String, _ binds: [OracleData]) async throws -> [OracleRow] {
+    public func query(_ query: String, _ binds: [OracleData] = []) async throws -> [OracleRow] {
         try await self.query(query, binds).get()
     }
 }
