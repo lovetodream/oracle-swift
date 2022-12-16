@@ -32,7 +32,8 @@ internal struct OracleStatement {
                 }
             case .text(let value):
                 try value.withCString {
-                    var data = dpiData(isNull: 0, value: dpiDataBuffer(asString: UnsafeMutablePointer(mutating: $0)))
+                    let bytes = dpiBytes(ptr: UnsafeMutablePointer(mutating: $0), length: UInt32(value.count), encoding: nil)
+                    var data = dpiData(isNull: 0, value: dpiDataBuffer(asBytes: bytes))
                     guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_BYTES), &data) == DPI_SUCCESS else {
                         throw OracleError.getLast(for: connection)
                     }
