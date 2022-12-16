@@ -46,4 +46,4 @@ jobs:
       env:
         ORA_USER: my_user
         ORA_PWD: my_password
-        ORA_CONN: //oracle:1521/XEPDB1
+        ORA_CONN: //localhost:1521/XEPDB1
