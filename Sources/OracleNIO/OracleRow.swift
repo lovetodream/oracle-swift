@@ -18,7 +18,7 @@ public struct OracleRow {
     }
 
     public func column(_ name: String) -> OracleData? {
-        guard let offset = columnOffsets.lookupTable[name] else {
+        guard let offset = columnOffsets.lookupTable[name.uppercased()] else {
             return nil
         }
         return data[offset]
