@@ -36,7 +36,7 @@ jobs:
     - name: remove me later
       run: ls -R
     - name: Add OIC path to env
-      run: echo "ORA_OIC=$(pwd)/instantclient_21_8/" >> $GITHUB_ENV
+      run: echo "LD_LIBRARY_PATH=$(pwd)/instantclient_21_8:$LD_LIBRARY_PATH" >> $GITHUB_ENV
     - name: remove too
       run: set
     - name: Build
