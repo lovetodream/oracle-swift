@@ -112,7 +112,7 @@ public final class OracleConnection: OracleDatabase {
         self.handle == nil
     }
 
-    public static func open(
+    public static func connect(
         authorizationMode: AuthorizationMode = .default,
         username: String,
         password: String,

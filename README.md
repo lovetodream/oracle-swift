@@ -11,7 +11,7 @@ OracleNIO uses ODPI-C internally which depends on the Oracle Instant Client Libr
 ### Establishing a connection
 
 ```swift
-let connection = try OracleConnection.open(
+let connection = try OracleConnection.connect(
     username: "username", 
     password: "password", 
     connectionString: "//host:port/...", 
