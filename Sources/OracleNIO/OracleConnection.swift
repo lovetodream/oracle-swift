@@ -161,6 +161,10 @@ public final class OracleConnection: OracleDatabase {
         self.logger = logger
     }
 
+    public static func libraryMajorVersion() -> Int32 { DPI_MAJOR_VERSION }
+    public static func libraryMinorVersion() -> Int32 { DPI_MINOR_VERSION }
+    public static func libraryPatchVersion() -> Int32 { DPI_PATCH_LEVEL }
+
     internal var errorMessage: String? {
         var errorInfo = dpiErrorInfo()
         dpiContext_getError(context, &errorInfo)
