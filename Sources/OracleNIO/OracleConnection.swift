@@ -21,21 +21,21 @@ extension OracleDatabase {
         }.map { rows }
     }
 
-    public func query(_ string: String, binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
+    public func query(_ string: String, _ binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
         var rows = [OracleRow]()
-        return self.query(string, binds: binds) { row in
+        return self.query(string, binds) { row in
             rows.append(row)
         }.map { rows }
     }
 
-    public func query(_ string: String, binds: [OracleData] = [], onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
+    public func query(_ string: String, _ binds: [OracleData] = [], _ onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
         var bindings = OracleBindings()
         bindings.values = binds
         let query = OracleQuery(unsafeSQL: string, binds: bindings)
         return self.query(query, onRow)
     }
 
-    public func query(_ string: String, binds: [OracleData] = [], logger: Logger, onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
+    public func query(_ string: String, _ binds: [OracleData] = [], logger: Logger, _ onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
         var bindings = OracleBindings()
         bindings.values = binds
         let query = OracleQuery(unsafeSQL: string, binds: bindings)
