@@ -26,6 +26,11 @@ internal struct OracleStatement {
                     throw OracleError.getLast(for: connection)
                 }
             case .float(let value):
+                var data = dpiData(isNull: 0, value: dpiDataBuffer(asFloat: value))
+                guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_FLOAT), &data) == DPI_SUCCESS else {
+                    throw OracleError.getLast(for: connection)
+                }
+            case .double(let value):
                 var data = dpiData(isNull: 0, value: dpiDataBuffer(asDouble: value))
                 guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_DOUBLE), &data) == DPI_SUCCESS else {
                     throw OracleError.getLast(for: connection)
@@ -123,9 +128,12 @@ internal struct OracleStatement {
             let val = value.pointee.value.asInt64
             let integer = Int(val)
             return .integer(integer)
+        case .float:
+            let float = value.pointee.value.asFloat
+            return .float(float)
         case .double:
             let double = value.pointee.value.asDouble
-            return .float(double)
+            return .double(double)
         case .text:
             guard let val = value.pointee.value.asString else {
                 throw OracleError(reason: .error, message: "Unexpected nil column text")
@@ -146,6 +154,7 @@ internal struct OracleStatement {
     private func dataType(for nativeType: dpiNativeTypeNum) throws -> OracleDataType {
         switch nativeType {
         case UInt32(DPI_NATIVE_TYPE_INT64): return .integer
+        case UInt32(DPI_NATIVE_TYPE_FLOAT): return .float
         case UInt32(DPI_NATIVE_TYPE_DOUBLE): return .double
         case UInt32(DPI_NATIVE_TYPE_BYTES): return .text
         case UInt32(DPI_NATIVE_TYPE_LOB): return .blob

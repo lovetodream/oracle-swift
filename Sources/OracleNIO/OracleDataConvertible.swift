@@ -40,13 +40,13 @@ extension UInt64: OracleDataConvertible {}
 
 extension Double: OracleDataConvertible {
     public init?(oracleData: OracleData) {
-        guard case .float(let value) = oracleData else {
+        guard case .double(let value) = oracleData else {
             return nil
         }
         self = value
     }
 
-    public var oracleData: OracleData? { .float(self) }
+    public var oracleData: OracleData? { .double(self) }
 }
 
 extension Float: OracleDataConvertible {
@@ -54,10 +54,10 @@ extension Float: OracleDataConvertible {
         guard case .float(let value) = oracleData else {
             return nil
         }
-        self = Float(value)
+        self = value
     }
 
-    public var oracleData: OracleData? { .float(Double(self)) }
+    public var oracleData: OracleData? { .float(self) }
 }
 
 extension ByteBuffer: OracleDataConvertible {

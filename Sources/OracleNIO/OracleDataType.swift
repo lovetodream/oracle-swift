@@ -3,6 +3,9 @@ public enum OracleDataType {
     /// `INTEGER`.
     case integer
 
+    /// `FLOAT`.
+    case float
+
     /// `DOUBLE`.
     case double
 
@@ -19,6 +22,7 @@ public enum OracleDataType {
     public func serialize(_ binds: inout [Encodable]) -> String {
         switch self {
         case .integer: return "INTEGER"
+        case .float: return "FLOAT"
         case .double: return "DOUBLE"
         case .text: return "TEXT"
         case .blob: return "BLOB"

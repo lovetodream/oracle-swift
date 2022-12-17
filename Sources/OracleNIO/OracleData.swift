@@ -3,8 +3,11 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
     /// `Int`.
     case integer(Int)
 
+    /// `Float`.
+    case float(Float)
+
     /// `Double`.
-    case float(Double)
+    case double(Double)
 
     /// `String`.
     case text(String)
@@ -19,7 +22,9 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .integer(let integer):
             return integer
-        case .float(let double):
+        case .float(let float):
+            return Int(float)
+        case .double(let double):
             return Int(double)
         case .text(let string):
             return Int(string)
@@ -32,7 +37,9 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .integer(let integer):
             return Double(integer)
-        case .float(let double):
+        case .float(let float):
+            return Double(float)
+        case .double(let double):
             return double
         case .text(let string):
             return Double(string)
@@ -45,7 +52,9 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .integer(let integer):
             return String(integer)
-        case .float(let double):
+        case .float(let float):
+            return String(float)
+        case .double(let double):
             return String(double)
         case .text(let string):
             return string
@@ -67,6 +76,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .blob(let data): return "<\(data.readableBytes) bytes>"
         case .float(let float): return float.description
+        case .double(let double): return double.description
         case .integer(let int): return int.description
         case .null: return "null"
         case .text(let text): return "\"" + text + "\""
@@ -79,6 +89,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .integer(let value): try container.encode(value)
         case .float(let value): try container.encode(value)
+        case .double(let value): try container.encode(value)
         case .text(let value): try container.encode(value)
         case .blob(var value):
             let bytes = value.readBytes(length: value.readableBytes) ?? []
