@@ -9,6 +9,7 @@ public struct OracleError: Error, CustomStringConvertible, LocalizedError {
 
     public var errorDescription: String? { description }
 
+    @inlinable
     internal init(reason: Reason, message: String) {
         self.reason = reason
         self.message = message

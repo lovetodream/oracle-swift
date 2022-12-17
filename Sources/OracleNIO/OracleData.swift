@@ -1,5 +1,5 @@
 /// Supported Oracle data types
-public enum OracleData: Equatable, Encodable, CustomStringConvertible {
+public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible {
     /// `Int`.
     case integer(Int)
 

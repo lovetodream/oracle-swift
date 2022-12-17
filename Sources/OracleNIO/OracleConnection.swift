@@ -4,19 +4,19 @@ public protocol OracleDatabase {
     var logger: Logger { get }
     var eventLoop: EventLoop { get }
 
-    func query(_ query: String, _ binds: [OracleData], logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void>
+    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void>
 
     func withConnection<T>(_ closure: @escaping (OracleConnection) -> EventLoopFuture<T>) -> EventLoopFuture<T>
 }
 
 extension OracleDatabase {
-    public func query(_ query: String, _ binds: [OracleData] = [], _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
-        self.query(query, binds, logger: logger, onRow)
+    public func query(_ query: OracleQuery, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+        self.query(query, logger: logger, onRow)
     }
 
-    public func query(_ query: String, _ binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
+    public func query(_ query: OracleQuery) -> EventLoopFuture<[OracleRow]> {
         var rows = [OracleRow]()
-        return self.query(query, binds, logger: logger) { row in
+        return self.query(query, logger: logger) { row in
             rows.append(row)
         }.map { rows }
     }
@@ -39,8 +39,8 @@ private struct _OracleDatabaseCustomLogger: OracleDatabase {
         self.database.withConnection(closure)
     }
 
-    func query(_ query: String, _ binds: [OracleData], logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
-        self.database.query(query, binds, logger: logger, onRow)
+    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+        self.database.query(query, logger: logger, onRow)
     }
 }
 
@@ -171,14 +171,14 @@ public final class OracleConnection: OracleDatabase {
         closure(self)
     }
 
-    public func query(_ query: String, _ binds: [OracleData], logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
-        logger.debug("\(query) \(binds)")
+    public func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+        logger.debug("\(query.sql) \(query.binds.values)")
         let promise = self.eventLoop.makePromise(of: Void.self)
         threadPool.submit { state in
             do {
-                let statement = try OracleStatement(query: query, on: self)
+                let statement = try OracleStatement(query: query.sql, on: self)
                 logger.trace("Adding binds...")
-                try statement.bind(binds)
+                try statement.bind(query.binds.values)
                 logger.trace("Binds added successfully")
                 logger.trace("Executing statement...")
                 try statement.execute()
@@ -252,8 +252,8 @@ extension OracleConnection {
     }
 
     @discardableResult
-    public func query(_ query: String, _ binds: [OracleData] = []) async throws -> [OracleRow] {
-        try await self.query(query, binds).get()
+    public func query(_ query: OracleQuery) async throws -> [OracleRow] {
+        try await self.query(query).get()
     }
 }
 #endif

@@ -64,7 +64,7 @@ final class OracleNIOTests: XCTestCase {
         defer { try! connection.close().wait() }
 
         let value = "Hello, World!"
-        let rows = try await connection.query("SELECT :1 as value FROM dual", [value.oracleData!])
+        let rows = try await connection.query("SELECT \(value) as value FROM dual")
         XCTAssertEqual(value, rows.first?.column("value")?.string)
     }
 
@@ -78,7 +78,7 @@ final class OracleNIOTests: XCTestCase {
         defer { try! connection.close().wait() }
 
         let value = 1
-        let rows = try await connection.query("SELECT :1 as value FROM dual", [value.oracleData!])
+        let rows = try await connection.query("SELECT \(value) as value FROM dual")
         XCTAssertEqual(value, rows.first?.column("value")?.integer)
     }
 }
