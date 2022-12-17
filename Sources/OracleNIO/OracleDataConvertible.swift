@@ -60,6 +60,17 @@ extension Float: OracleDataConvertible {
     public var oracleData: OracleData? { .float(self) }
 }
 
+extension Date: OracleDataConvertible {
+    public init?(oracleData: OracleData) {
+        guard case .timestamp(let value) = oracleData else {
+            return nil
+        }
+        self = value
+    }
+
+    public var oracleData: OracleData? { .timestamp(self) }
+}
+
 extension ByteBuffer: OracleDataConvertible {
     public init?(oracleData: OracleData) {
         guard case .blob(let value) = oracleData else {

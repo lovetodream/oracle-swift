@@ -1,3 +1,5 @@
+import struct Foundation.Date
+
 /// Supported Oracle data types
 public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible {
     /// `Int`.
@@ -11,6 +13,9 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
 
     /// `String`.
     case text(String)
+
+    /// `Date`
+    case timestamp(Date)
 
     /// `ByteBuffer`.
     case blob(ByteBuffer)
@@ -28,7 +33,22 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return Int(double)
         case .text(let string):
             return Int(string)
-        case .blob, .null:
+        case .timestamp, .blob, .null:
+            return nil
+        }
+    }
+
+    public var float: Float? {
+        switch self {
+        case .integer(let integer):
+            return Float(integer)
+        case .float(let float):
+            return float
+        case .double(let double):
+            return Float(double)
+        case .text(let string):
+            return Float(string)
+        case .timestamp, .blob, .null:
             return nil
         }
     }
@@ -43,7 +63,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return double
         case .text(let string):
             return Double(string)
-        case .blob, .null:
+        case .timestamp, .blob, .null:
             return nil
         }
     }
@@ -58,7 +78,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return String(double)
         case .text(let string):
             return string
-        case .blob, .null:
+        case .timestamp, .blob, .null:
             return nil
         }
     }
@@ -71,6 +91,14 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         }
     }
 
+    public var date: Date? {
+        switch self {
+        case .timestamp(let date):
+            return date
+        default: return nil
+        }
+    }
+
     /// Description of data.
     public var description: String {
         switch self {
@@ -78,6 +106,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         case .float(let float): return float.description
         case .double(let double): return double.description
         case .integer(let int): return int.description
+        case .timestamp(let date): return date.description
         case .null: return "null"
         case .text(let text): return "\"" + text + "\""
         }
@@ -91,6 +120,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         case .float(let value): try container.encode(value)
         case .double(let value): try container.encode(value)
         case .text(let value): try container.encode(value)
+        case .timestamp(let value): try container.encode(value)
         case .blob(var value):
             let bytes = value.readBytes(length: value.readableBytes) ?? []
             try container.encode(bytes)

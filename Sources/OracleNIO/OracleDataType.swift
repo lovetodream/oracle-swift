@@ -12,6 +12,9 @@ public enum OracleDataType {
     /// `TEXT`.
     case text
 
+    /// `TIMESTAMP`
+    case timestamp
+
     /// `BLOB`.
     case blob
 
@@ -25,6 +28,7 @@ public enum OracleDataType {
         case .float: return "FLOAT"
         case .double: return "DOUBLE"
         case .text: return "TEXT"
+        case .timestamp: return "TIMESTAMP"
         case .blob: return "BLOB"
         case .null: return "NULL"
         }

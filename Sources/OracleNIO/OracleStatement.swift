@@ -1,4 +1,7 @@
 import ODPIC
+import struct Foundation.Calendar
+import struct Foundation.DateComponents
+import struct Foundation.TimeZone
 
 internal struct OracleStatement {
     private var handle: OpaquePointer?
@@ -42,6 +45,37 @@ internal struct OracleStatement {
                     guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_BYTES), &data) == DPI_SUCCESS else {
                         throw OracleError.getLast(for: connection)
                     }
+                }
+            case .timestamp(let value):
+                let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second, .nanosecond, .timeZone], from: value)
+                guard
+                    let tzOffset = components.timeZone?.secondsFromGMT(),
+                    let year = components.year,
+                    let month = components.month,
+                    let day = components.day,
+                    let hour = components.hour,
+                    let minute = components.minute,
+                    let second = components.second,
+                    let nanosecond = components.nanosecond
+                else {
+                    throw OracleError(reason: .error, message: "Couldn't extract date required components from \(value)")
+                }
+                let tzHourOffset = tzOffset / 3600
+                let tzMinuteOffset = abs(tzOffset / 60) % 60
+                let timestamp = dpiTimestamp(
+                    year: Int16(year),
+                    month: UInt8(month),
+                    day: UInt8(day),
+                    hour: UInt8(hour),
+                    minute: UInt8(minute),
+                    second: UInt8(second),
+                    fsecond: UInt32(nanosecond),
+                    tzHourOffset: Int8(tzHourOffset),
+                    tzMinuteOffset: Int8(tzMinuteOffset)
+                )
+                var data = dpiData(isNull: 0, value: dpiDataBuffer(asTimestamp: timestamp))
+                guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_TIMESTAMP), &data) == DPI_SUCCESS else {
+                    throw OracleError.getLast(for: connection)
                 }
             case .blob(var value):
                 try value.withUnsafeMutableReadableBytes { pointer in
@@ -140,6 +174,25 @@ internal struct OracleStatement {
             }
             let string = String(cString: val)
             return .text(string)
+        case .timestamp:
+            let timestamp = value.pointee.value.asTimestamp
+            let tzOffset = ((timestamp.tzHourOffset * 60) + timestamp.tzMinuteOffset) * 60
+
+            let timeZone = TimeZone(secondsFromGMT: Int(tzOffset))
+            guard let date = DateComponents(
+                calendar: .current,
+                timeZone: timeZone,
+                year: Int(timestamp.year),
+                month: Int(timestamp.month),
+                day: Int(timestamp.day),
+                hour: Int(timestamp.hour),
+                minute: Int(timestamp.minute),
+                second: Int(timestamp.second),
+                nanosecond: Int(timestamp.fsecond)
+            ).date else {
+                throw OracleError(reason: .error, message: "Couldn't encode a valid date from timestamp")
+            }
+            return .timestamp(date)
         case .blob:
             let length = Int(value.pointee.value.asBytes.length)
             var buffer = ByteBufferAllocator().buffer(capacity: length)
@@ -157,6 +210,7 @@ internal struct OracleStatement {
         case UInt32(DPI_NATIVE_TYPE_FLOAT): return .float
         case UInt32(DPI_NATIVE_TYPE_DOUBLE): return .double
         case UInt32(DPI_NATIVE_TYPE_BYTES): return .text
+        case UInt32(DPI_NATIVE_TYPE_TIMESTAMP): return .timestamp
         case UInt32(DPI_NATIVE_TYPE_LOB): return .blob
         case UInt32(DPI_NATIVE_TYPE_NULL): return .null
         default: throw OracleError(reason: .error, message: "Unexpected column type: \(nativeType.description)")
