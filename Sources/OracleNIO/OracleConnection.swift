@@ -274,4 +274,11 @@ extension OracleConnection {
         let query = OracleQuery(unsafeSQL: string, binds: bindings)
         return self.query(query, onRow)
     }
+
+    public func query(_ string: String, binds: [OracleData] = [], logger: Logger, onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
+        var bindings = OracleBindings()
+        bindings.values = binds
+        let query = OracleQuery(unsafeSQL: string, binds: bindings)
+        return self.query(query, logger: logger, onRow)
+    }
 }
