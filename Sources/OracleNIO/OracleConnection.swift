@@ -20,6 +20,27 @@ extension OracleDatabase {
             rows.append(row)
         }.map { rows }
     }
+
+    public func query(_ string: String, binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
+        var rows = [OracleRow]()
+        return self.query(string, binds: binds) { row in
+            rows.append(row)
+        }.map { rows }
+    }
+
+    public func query(_ string: String, binds: [OracleData] = [], onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
+        var bindings = OracleBindings()
+        bindings.values = binds
+        let query = OracleQuery(unsafeSQL: string, binds: bindings)
+        return self.query(query, onRow)
+    }
+
+    public func query(_ string: String, binds: [OracleData] = [], logger: Logger, onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
+        var bindings = OracleBindings()
+        bindings.values = binds
+        let query = OracleQuery(unsafeSQL: string, binds: bindings)
+        return self.query(query, logger: logger, onRow)
+    }
 }
 
 extension OracleDatabase {
@@ -261,28 +282,3 @@ extension OracleConnection {
     }
 }
 #endif
-
-// MARK: Alternative Queries
-
-extension OracleConnection {
-    public func query(_ string: String, binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
-        var rows = [OracleRow]()
-        return self.query(string, binds: binds) { row in
-            rows.append(row)
-        }.map { rows }
-    }
-
-    public func query(_ string: String, binds: [OracleData] = [], onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
-        var bindings = OracleBindings()
-        bindings.values = binds
-        let query = OracleQuery(unsafeSQL: string, binds: bindings)
-        return self.query(query, onRow)
-    }
-
-    public func query(_ string: String, binds: [OracleData] = [], logger: Logger, onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
-        var bindings = OracleBindings()
-        bindings.values = binds
-        let query = OracleQuery(unsafeSQL: string, binds: bindings)
-        return self.query(query, logger: logger, onRow)
-    }
-}
