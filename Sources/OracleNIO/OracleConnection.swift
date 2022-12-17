@@ -261,8 +261,11 @@ extension OracleConnection {
 // MARK: Alternative Queries
 
 extension OracleConnection {
-    public func query(_ string: String, binds: [OracleData] = []) -> EventLoopFuture<Void> {
-        self.query(string, binds: binds, onRow: { _ in })
+    public func query(_ string: String, binds: [OracleData] = []) -> EventLoopFuture<[OracleRow]> {
+        var rows = [OracleRow]()
+        return self.query(string, binds: binds) { row in
+            rows.append(row)
+        }.map { rows }
     }
 
     public func query(_ string: String, binds: [OracleData] = [], onRow: @escaping (OracleRow) throws -> ()) -> EventLoopFuture<Void> {
