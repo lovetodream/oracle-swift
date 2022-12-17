@@ -4,13 +4,13 @@ public protocol OracleDatabase {
     var logger: Logger { get }
     var eventLoop: EventLoop { get }
 
-    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void>
+    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) throws -> Void) -> EventLoopFuture<Void>
 
     func withConnection<T>(_ closure: @escaping (OracleConnection) -> EventLoopFuture<T>) -> EventLoopFuture<T>
 }
 
 extension OracleDatabase {
-    public func query(_ query: OracleQuery, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+    public func query(_ query: OracleQuery, _ onRow: @escaping (OracleRow) throws -> Void) -> EventLoopFuture<Void> {
         self.query(query, logger: logger, onRow)
     }
 
@@ -39,7 +39,7 @@ private struct _OracleDatabaseCustomLogger: OracleDatabase {
         self.database.withConnection(closure)
     }
 
-    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+    func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) throws -> Void) -> EventLoopFuture<Void> {
         self.database.query(query, logger: logger, onRow)
     }
 }
@@ -171,7 +171,7 @@ public final class OracleConnection: OracleDatabase {
         closure(self)
     }
 
-    public func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) -> Void) -> EventLoopFuture<Void> {
+    public func query(_ query: OracleQuery, logger: Logger, _ onRow: @escaping (OracleRow) throws -> Void) -> EventLoopFuture<Void> {
         logger.debug("\(query.sql) \(query.binds.values)")
         let promise = self.eventLoop.makePromise(of: Void.self)
         threadPool.submit { state in
@@ -189,7 +189,7 @@ public final class OracleConnection: OracleDatabase {
                 var callbacks: [EventLoopFuture<Void>] = []
                 while let row = try statement.nextRow(for: columns) {
                     let callback = self.eventLoop.submit {
-                        onRow(row)
+                        try onRow(row)
                     }
                     callbacks.append(callback)
                 }
