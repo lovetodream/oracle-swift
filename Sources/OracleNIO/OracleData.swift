@@ -1,4 +1,5 @@
 import struct Foundation.Date
+import struct Foundation.UUID
 
 /// Supported Oracle data types
 public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible {
@@ -127,6 +128,24 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         switch self {
         case .timestamp(let date):
             return date
+        default: return nil
+        }
+    }
+
+    public var uuid: UUID? {
+        switch self {
+        case .raw(var buffer):
+            guard buffer.readableBytes == 16, let bytes = buffer.readBytes(length: 16) else {
+                return nil
+            }
+            return UUID(uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11],
+                bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
+        case .text(let string):
+            return .init(uuidString: string)
         default: return nil
         }
     }

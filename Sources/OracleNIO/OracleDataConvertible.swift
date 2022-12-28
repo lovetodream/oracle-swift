@@ -110,3 +110,21 @@ extension Bool: OracleDataConvertible {
 
     public var oracleData: OracleData? { .integer(self ? 1 : 0) }
 }
+
+extension UUID: OracleDataConvertible {
+    public init?(oracleData: OracleData) {
+        guard let uuid = oracleData.uuid else {
+            return nil
+        }
+        self = uuid
+    }
+
+    public var oracleData: OracleData? {
+        var buffer = ByteBufferAllocator().buffer(capacity: 16)
+        var cuuid = uuid
+        return withUnsafeMutableBytes(of: &cuuid) { ptr in
+            buffer.writeBytes(ptr)
+            return .raw(buffer)
+        }
+    }
+}
