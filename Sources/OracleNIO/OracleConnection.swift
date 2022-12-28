@@ -201,7 +201,7 @@ public final class OracleConnection: OracleDatabase {
         let promise = self.eventLoop.makePromise(of: Void.self)
         threadPool.submit { state in
             do {
-                let statement = try OracleStatement(query: query.sql, on: self)
+                var statement = try OracleStatement(query: query.sql, on: self)
                 logger.trace("Adding binds...")
                 try statement.bind(query.binds.values)
                 logger.trace("Binds added successfully")

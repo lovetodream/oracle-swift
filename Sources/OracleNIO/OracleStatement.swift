@@ -7,6 +7,8 @@ internal struct OracleStatement {
     private var handle: OpaquePointer?
     private let connection: OracleConnection
 
+    private var variables = [OpaquePointer?]()
+
     internal init(query: String, on connection: OracleConnection) throws {
         guard let cHandle = connection.handle else {
             throw OracleError(reason: .noHandle, message: "The db handle is not available, the connection is most likely already closed")
@@ -19,7 +21,7 @@ internal struct OracleStatement {
         connection.logger.debug("Statement successfully prepared")
     }
 
-    internal func bind(_ binds: [OracleData]) throws {
+    internal mutating func bind(_ binds: [OracleData]) throws {
         for (i, bind) in binds.enumerated() {
             let i = UInt32(i + 1)
             switch bind {
@@ -90,11 +92,20 @@ internal struct OracleStatement {
                     throw OracleError.getLast(for: connection)
                 }
             case .raw(var value):
-                try value.withUnsafeMutableReadableBytes { pointer in
-                    var data = dpiData(isNull: 0, value: dpiDataBuffer(asRaw: pointer.baseAddress))
-                    guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_BYTES), &data) == DPI_SUCCESS else {
+                var data = value.withUnsafeMutableReadableBytes { pointer in
+                    return dpiData(isNull: 0, value: dpiDataBuffer(asRaw: pointer.baseAddress))
+                }
+                let variable = try withUnsafeMutablePointer(to: &data) { pointer in
+                    var variable: OpaquePointer?
+                    var ptr: UnsafeMutablePointer<dpiData>? = pointer
+                    guard dpiConn_newVar(connection.handle, dpiOracleTypeNum(DPI_ORACLE_TYPE_RAW), dpiNativeTypeNum(DPI_NATIVE_TYPE_BYTES), 0, UInt32(value.readableBytes), 1, 0, nil, &variable, &ptr) != 0 else {
                         throw OracleError.getLast(for: connection)
                     }
+                    return variable
+                }
+                self.variables.append(variable)
+                guard dpiStmt_bindByPos(handle, i, variable) == DPI_SUCCESS else {
+                    throw OracleError.getLast(for: connection)
                 }
             }
         }
@@ -135,6 +146,12 @@ internal struct OracleStatement {
         }
 
         if found == 0 {
+            // cleanup
+            for variable in variables {
+                guard dpiVar_release(variable) == DPI_SUCCESS else {
+                    throw OracleError.getLast(for: connection)
+                }
+            }
             guard dpiStmt_release(handle) == DPI_SUCCESS else {
                 throw OracleError.getLast(for: connection)
             }
