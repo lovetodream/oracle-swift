@@ -89,6 +89,13 @@ internal struct OracleStatement {
                 guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_NULL), &data) == DPI_SUCCESS else {
                     throw OracleError.getLast(for: connection)
                 }
+            case .raw(var value):
+                try value.withUnsafeMutableReadableBytes { pointer in
+                    var data = dpiData(isNull: 0, value: dpiDataBuffer(asRaw: pointer.baseAddress))
+                    guard dpiStmt_bindValueByPos(handle, i, dpiNativeTypeNum(DPI_NATIVE_TYPE_BYTES), &data) == DPI_SUCCESS else {
+                        throw OracleError.getLast(for: connection)
+                    }
+                }
             }
         }
     }
@@ -153,10 +160,12 @@ internal struct OracleStatement {
         guard dpiStmt_getQueryValue(handle, UInt32(offset), &nativeType, &value) == DPI_SUCCESS else {
             throw OracleError.getLast(for: connection)
         }
-        guard let value else {
+        var queryInfo = dpiQueryInfo()
+        guard dpiStmt_getQueryInfo(handle, UInt32(offset), &queryInfo) == DPI_SUCCESS else {
             throw OracleError.getLast(for: connection)
         }
-        let type = try dataType(for: nativeType)
+        guard let value else { throw OracleError.getLast(for: connection) }
+        let type = try dataType(for: nativeType, and: queryInfo.typeInfo)
         switch type {
         case .integer:
             let val = value.pointee.value.asInt64
@@ -194,22 +203,34 @@ internal struct OracleStatement {
             }
             return .timestamp(date)
         case .blob:
-            let length = Int(value.pointee.value.asBytes.length)
+            let bytes = value.pointee.value.asBytes
+            let length = Int(bytes.length)
             var buffer = ByteBufferAllocator().buffer(capacity: length)
-            if let blobPointer = value.pointee.value.asRaw {
-                buffer.writeBytes(UnsafeRawBufferPointer(start: blobPointer.assumingMemoryBound(to: UInt8.self), count: length))
-            }
+            let pointer = UnsafeRawBufferPointer(start: bytes.ptr, count: length)
+            buffer.writeBytes(pointer)
             return .blob(buffer)
+        case .raw:
+            let raw = value.pointee.value.asRaw.load(as: [UInt8].self)
+            var buffer = ByteBufferAllocator().buffer(capacity: raw.count)
+            buffer.writeBytes(raw)
+            return .raw(buffer)
         case .null: return .null
         }
     }
 
-    private func dataType(for nativeType: dpiNativeTypeNum) throws -> OracleDataType {
+    private func dataType(for nativeType: dpiNativeTypeNum, and oracleTypeInfo: dpiDataTypeInfo) throws -> OracleDataType {
         switch nativeType {
         case UInt32(DPI_NATIVE_TYPE_INT64): return .integer
         case UInt32(DPI_NATIVE_TYPE_FLOAT): return .float
         case UInt32(DPI_NATIVE_TYPE_DOUBLE): return .double
-        case UInt32(DPI_NATIVE_TYPE_BYTES): return .text
+        case UInt32(DPI_NATIVE_TYPE_BYTES):
+            if
+                oracleTypeInfo.oracleTypeNum == DPI_ORACLE_TYPE_RAW ||
+                oracleTypeInfo.oracleTypeNum == DPI_ORACLE_TYPE_LONG_RAW
+            {
+                return .raw
+            }
+            return .text
         case UInt32(DPI_NATIVE_TYPE_TIMESTAMP): return .timestamp
         case UInt32(DPI_NATIVE_TYPE_LOB): return .blob
         case UInt32(DPI_NATIVE_TYPE_NULL): return .null

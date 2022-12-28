@@ -18,16 +18,20 @@ public enum OracleDataType {
     /// `BLOB`.
     case blob
 
+    /// `RAW`.
+    case raw
+
     /// `NULL`.
     case null
 
     /// See `SQLSerializable`.
     public func serialize(_ binds: inout [Encodable]) -> String {
         switch self {
-        case .integer: return "INTEGER"
+        case .integer: return "NUMBER"
         case .float: return "FLOAT"
         case .double: return "DOUBLE"
-        case .text: return "TEXT"
+        case .text: return "VARCHAR(4000)"
+        case .raw: return "RAW"
         case .timestamp: return "TIMESTAMP"
         case .blob: return "BLOB"
         case .null: return "NULL"

@@ -14,11 +14,14 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
     /// `String`.
     case text(String)
 
-    /// `Date`
+    /// `Date`.
     case timestamp(Date)
 
     /// `ByteBuffer`.
     case blob(ByteBuffer)
+
+    /// `RAW`.
+    case raw(ByteBuffer)
 
     /// `NULL`.
     case null
@@ -33,6 +36,15 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return Int(double)
         case .text(let string):
             return Int(string)
+        case .raw(var buffer):
+            guard let bytes = buffer.readBytes(length: MemoryLayout<Int>.size) else {
+                return nil
+            }
+            var int: Int = 0
+            withUnsafeMutableBytes(of: &int) { buffer in
+                buffer.copyBytes(from: bytes)
+            }
+            return int
         case .timestamp, .blob, .null:
             return nil
         }
@@ -48,6 +60,15 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return Float(double)
         case .text(let string):
             return Float(string)
+        case .raw(var buffer):
+            guard let bytes = buffer.readBytes(length: MemoryLayout<Float>.size) else {
+                return nil
+            }
+            var float: Float = 0.0
+            withUnsafeMutableBytes(of: &float) { buffer in
+                buffer.copyBytes(from: bytes)
+            }
+            return float
         case .timestamp, .blob, .null:
             return nil
         }
@@ -63,6 +84,15 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return double
         case .text(let string):
             return Double(string)
+        case .raw(var buffer):
+            guard let bytes = buffer.readBytes(length: MemoryLayout<Double>.size) else {
+                return nil
+            }
+            var double: Double = 0.0
+            withUnsafeMutableBytes(of: &double) { buffer in
+                buffer.copyBytes(from: bytes)
+            }
+            return double
         case .timestamp, .blob, .null:
             return nil
         }
@@ -78,6 +108,8 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             return String(double)
         case .text(let string):
             return string
+        case .raw(var buffer):
+            return buffer.readString(length: buffer.readableBytes)
         case .timestamp, .blob, .null:
             return nil
         }
@@ -109,6 +141,7 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
         case .timestamp(let date): return date.description
         case .null: return "null"
         case .text(let text): return "\"" + text + "\""
+        case .raw(let buffer): return "<\(buffer.readableBytes) bytes>"
         }
     }
 
@@ -125,6 +158,9 @@ public enum OracleData: Hashable, Equatable, Encodable, CustomStringConvertible 
             let bytes = value.readBytes(length: value.readableBytes) ?? []
             try container.encode(bytes)
         case .null: try container.encodeNil()
+        case .raw(var value):
+            let bytes = value.readBytes(length: value.readableBytes) ?? []
+            try container.encode(bytes)
         }
     }
 }
